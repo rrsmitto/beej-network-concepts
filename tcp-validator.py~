@@ -1,0 +1,41 @@
+import os
+
+def read_address_file(filename):
+    with open(filename, 'r') as f:
+        for line in f:
+            ips = line.split()
+
+    return ips[0], ips[1]
+
+def ip_to_bytes(ip):
+    ip_octets = ip.split('.')
+    ip_bytes = b''
+    for ip in ip_octets:
+        ip_bytes += int(ip).to_bytes()
+
+    return ip_bytes
+
+def get_tcp_length(filename):
+    length = os.path.getsize(filename)
+    return length.to_bytes(2)
+
+def get_ptcl():
+    ptcl = 6
+    return int.to_bytes(ptcl)
+
+def pseudo_ip_header(source, dest, pctl, tcp_length):
+    return source + dest + (0).to_bytes() + pctl + tcp_length
+
+source_ip, dest_ip = read_address_file('/home/rsmith/beej/network-concepts/tcp_data/tcp_addrs_1.txt')
+source_ip_bytes = ip_to_bytes(source_ip)
+dest_ip_bytes = ip_to_bytes(dest_ip)
+ptcl = get_ptcl()
+tcp_length = get_tcp_length('/home/rsmith/beej/network-concepts/tcp_data/tcp_data_1.dat')
+pseudo_header = pseudo_ip_header(source_ip_bytes, dest_ip_bytes, ptcl, tcp_length)
+print(pseudo_header.hex())
+
+source_ip2 = ip_to_bytes('255.0.255.1')
+dest_ip2 = ip_to_bytes('127.255.0.1')
+tcp_length2 = (3490).to_bytes(2)
+pseudo_header2 = pseudo_ip_header(source_ip2, dest_ip2, ptcl, tcp_length2)
+print(pseudo_header2.hex())

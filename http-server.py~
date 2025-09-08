@@ -1,0 +1,53 @@
+import sys
+import socket
+import re
+import os
+import mimetypes
+
+def process_request(request):
+    lines = request.split('\r\n')
+    print(lines)
+    header = lines[0].split()
+    print(header)
+    path = os.path.split(header[1])
+    print(path)
+    response_code = '404 Not Found'
+    mime_type = 'text/plain'
+    content_length = '13'
+    connection = 'close'
+    if path[1]:
+        response_code = '200 OK'
+        mime_type = mimetypes.guess_type(path[1])[0]
+        content_length = str(os.path.getsize(path[1]))
+        connection = 'close'
+    response_string = 'HTTP/1.1 ' + response_code + '\r\nContent Type: ' +  mime_type + '\r\nContent-Length: ' + content_length + '\r\nConnection: ' + connection + '\r\n'
+    payload = ''
+    with open(path[1], 'r') as f:
+        for line in f:
+            payload += line
+
+    response_string = response_string + payload + '\r\n\r\n'
+
+    return response_string
+
+port = sys.argv[1]
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('', int(port)))
+s.listen()
+new_conn = s.accept()
+new_socket = new_conn[0]
+
+
+d = new_socket.recv(4096).decode("ISO-8859-1")
+request = d
+while d != '':
+    if d.endswith('\r\n\r\n'):
+        response = process_request(request)
+        print(response.encode("ISO-8859-1"))
+        new_socket.sendall(response.encode("ISO-8859-1"))
+        request = ''
+    request += d
+    d = new_socket.recv(4096).decode("ISO-8859-1")
+       
+new_socket.close()

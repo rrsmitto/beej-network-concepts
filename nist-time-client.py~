@@ -1,0 +1,11 @@
+import socket
+import time
+
+for i in range(4):
+    print("Requesting in:", 4-i)
+    time.sleep(1)
+
+with socket.socket() as nist_socket:
+    nist_socket.connect(('time.nist.gov', 37))
+    print('Connected to:', nist_socket.getpeername())
+    
