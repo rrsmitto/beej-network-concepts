@@ -90,7 +90,9 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
     
     graph = build_router_graph(routers)
-    print(graph.get_edges())
+    nodes = graph.get_nodes()
+    for node in nodes:
+        print(node, graph.get_neighbors(node))
 
 def build_router_graph(routers):
     graph = Graph()
