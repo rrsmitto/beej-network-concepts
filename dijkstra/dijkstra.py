@@ -3,6 +3,38 @@ import json
 import math  # If you want to use math.inf for infinity
 import netfuncs
 
+class Graph:
+    def __init__(self):
+        self._nodes = set()
+        self._edges = {}
+
+    def add_node(self, a):
+        self._nodes.add(a)
+        self._edges[a] = []
+        
+    def update_edge(self, a, b, w):
+        if a not in self._nodes:
+            self.add_node(a)
+        if b not in self._nodes:
+            self.add_node(b)
+            
+        self._edges[a].append((b, w))
+        self._edges[b].append((a, w))
+
+    def get_neighbors(self, a):
+        neighbors = None
+        if a in self._nodes:
+            neighbors = self._edges[a]
+
+        return neighbors
+
+    def get_edges(self):
+        return self._edges
+        
+    def get_nodes(self):
+        return self._nodes
+
+
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
     This function takes a dictionary representing the network, a source
@@ -47,7 +79,7 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
             "if_count": 3,
             "if_prefix": "en"
         },
-        ...
+        ...p
 
     The "ad" (Administrative Distance) field is the edge weight for that
     connection.
@@ -56,9 +88,19 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     function. Having it all built as a single wall of code is a recipe
     for madness.
     """
+    
+    graph = build_router_graph(routers)
+    print(graph.get_edges())
 
-    if netfuncs.ips_same_subnet(src_ip, dest_ip):
-        return ''
+def build_router_graph(routers):
+    graph = Graph()
+    for router in routers:
+        for connection in routers[router]['connections']:
+            weight = routers[router]['connections'][connection]['ad']
+            graph.update_edge(router, connection, weight)
+            
+    return graph
+    
 
 #------------------------------
 # DO NOT MODIFY BELOW THIS LINE
