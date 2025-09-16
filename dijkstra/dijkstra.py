@@ -2,6 +2,7 @@ import sys
 import json
 import math  # If you want to use math.inf for infinity
 import netfuncs
+import copy
 
 class Graph:
     def __init__(self):
@@ -10,7 +11,7 @@ class Graph:
 
     def add_node(self, a):
         self._nodes.add(a)
-        self._edges[a] = []
+        self._edges[a] = {}
         
     def update_edge(self, a, b, w):
         if a not in self._nodes:
@@ -18,22 +19,71 @@ class Graph:
         if b not in self._nodes:
             self.add_node(b)
             
-        self._edges[a].append((b, w))
-        self._edges[b].append((a, w))
+        self._edges[a][b] = w
 
     def get_neighbors(self, a):
         neighbors = None
         if a in self._nodes:
             neighbors = self._edges[a]
 
-        return neighbors
+        return copy.deepcopy(neighbors)
+
+    def get_distance(self, source, dest):
+        return self._edges[source][dest]
+
 
     def get_edges(self):
-        return self._edges
+        return copy.deepcopy(self._edges)
         
     def get_nodes(self):
-        return self._nodes
+        return copy.deepcopy(self._nodes)
 
+
+def dijkstra(graph, source):
+    not_visited = graph.get_nodes()
+    parents = dict.fromkeys(not_visited, None)
+    distances = dict.fromkeys(not_visited, math.inf)
+    distances[source] = 0
+
+    while not_visited:
+        min_dist = math.inf
+        min_node = None
+        for node in not_visited:
+            current_dist = distances[node]
+            if current_dist < min_dist:
+                min_node = node
+                min_dist = distances[node]
+        
+        neighbors = graph.get_neighbors(min_node)
+
+        for neighbor in neighbors:
+            current_dist= graph.get_distance(min_node, neighbor) + min_dist
+            if current_dist< distances[neighbor]:
+                distances[neighbor] = current_dist
+                parents[neighbor] = min_node
+
+        not_visited.remove(min_node)
+        
+    return distances, parents
+
+def get_path(parents, dest):
+    next_node = dest
+    path = []
+    while next_node:
+        path.append(next_node)
+        next_node = parents[next_node]
+
+    path.reverse()
+    return path
+
+def build_router_graph(routers):
+    graph = Graph()
+    for router in routers:
+        for connection in routers[router]['connections']:
+            weight = routers[router]['connections'][connection]['ad']
+            graph.update_edge(router, connection, weight)
+            
+    return graph
 
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
@@ -45,7 +95,7 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
 
     Note that the source IP and destination IP will probably not be
     routers! They will be on the same subnet as the router. You'll have
-    to search the routers to find the one on the same subnet as the
+    To search the routers to find the one on the same subnet as the
     source IP. Same for the destination IP. [Hint: make use of your
     find_router_for_ip() function from the last project!]
 
@@ -88,21 +138,20 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     function. Having it all built as a single wall of code is a recipe
     for madness.
     """
-    
+
+    src_router = netfuncs.find_router_for_ip(routers, src_ip)
+    dest_router = netfuncs.find_router_for_ip(routers, dest_ip)
     graph = build_router_graph(routers)
     nodes = graph.get_nodes()
-    for node in nodes:
-        print(node, graph.get_neighbors(node))
 
-def build_router_graph(routers):
-    graph = Graph()
-    for router in routers:
-        for connection in routers[router]['connections']:
-            weight = routers[router]['connections'][connection]['ad']
-            graph.update_edge(router, connection, weight)
-            
-    return graph
-    
+    if src_router == dest_router:
+        return []
+
+    edges = graph.get_edges()
+
+    distances, parents = dijkstra(graph, src_router)
+    return get_path(parents, dest_router)
+
 
 #------------------------------
 # DO NOT MODIFY BELOW THIS LINE
