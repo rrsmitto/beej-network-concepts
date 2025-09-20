@@ -7,8 +7,29 @@ import socket
 import select
 
 def run_server(port):
-    # TODO--fill this in
-    pass
+    server = socket.socket()
+    server.bind(('localhost', port))
+    server.listen()
+
+    connections = {server}
+
+    while(True):
+        ready, _, _ = select.select(connections, {}, {})
+
+        for connection in ready:
+            if connection == server:
+                conn, address = server.accept()
+                connections.add(conn)
+                print(address, ': connected')
+            else:
+                message = connection.recv(4096)
+                if message == b'':
+                    print(connection.getpeername(), ': disconnected')
+                    connections.remove(connection)
+                    connection.close()
+                    break
+
+                print(connection.getpeername(), len(message), 'bytes:', message)
 
 #--------------------------------#
 # Do not modify below this line! #
