@@ -27,8 +27,7 @@ def run_server(port):
                     print(connection.getpeername(), ': disconnected')
                     connections.remove(connection)
                     connection.close()
-                    break
-
+                    
                 print(connection.getpeername(), len(message), 'bytes:', message)
 
 #--------------------------------#
