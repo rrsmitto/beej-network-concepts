@@ -23,12 +23,14 @@ def run_server(port):
                 print(address, ': connected')
             else:
                 message = connection.recv(4096)
-                if message == b'':
+                if not message == b'':
+                    print(connection.getpeername(), len(message), 'bytes:', message)
+                else:
                     print(connection.getpeername(), ': disconnected')
                     connections.remove(connection)
                     connection.close()
                     
-                print(connection.getpeername(), len(message), 'bytes:', message)
+
 
 #--------------------------------#
 # Do not modify below this line! #
